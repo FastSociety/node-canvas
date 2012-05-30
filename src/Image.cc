@@ -232,6 +232,19 @@ Image::loadFromBuffer(uint8_t *buf, unsigned len) {
 }
 
 /*
+ * load from data buffer width*height*4 bytes
+ */
+cairo_status_t
+Image::loadFromDataBuffer(unsigned char *buf, int width, int height) {
+  clearData();
+  int stride = cairo_format_stride_for_width (CAIRO_FORMAT_ARGB32, width); // 4*width + ?
+  _surface = cairo_image_surface_create_for_data(buf,CAIRO_FORMAT_ARGB32,width,height,stride);
+  loaded();
+  return cairo_surface_status(_surface);
+}
+
+
+/*
  * Load PNG data from `buf`.
  */
 
