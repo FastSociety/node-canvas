@@ -238,8 +238,8 @@ cairo_status_t
 Image::loadFromDataBuffer(unsigned char *buf, int width, int height) {
   mout.setAction("node-canvas.paint.ccode.loadFromDataBuffer");
   mout << "top of loadFromDataBuffer" << LogStream::endl;
-  clearData();
-  mout << "after clearData" << LogStream::endl;
+  // clearData();
+  // mout << "after clearData" << LogStream::endl;
   int stride = cairo_format_stride_for_width (CAIRO_FORMAT_ARGB32, width); // 4*width + ?
   mout << "after stride " << LogStream::endl;
   _surface = cairo_image_surface_create_for_data(buf,CAIRO_FORMAT_ARGB32,width,height,stride);
