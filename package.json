@@ -4,9 +4,12 @@
  , "author": "TJ Holowaychuk <tj@learnboost.com>"
  , "keywords": ["canvas", "graphic", "graphics", "pixman", "cairo", "image", "images", "pdf"]
  , "homepage": "https://github.com/learnboost/node-canvas"
- , "repository": "git://github.com/learnboost/node-canvas"
+ , "repository": "git://github.com/victusfate/node-canvas"
  , "scripts": {
    "preinstall": "node-waf configure build"
+ }
+ , "dependencies": {
+    "Nile-Delta":           "git://github.com/victusfate/Nile-Delta.git"
  }
  , "devDependencies": {
      "express": ">= 2.3.7 && < 3.0.0"

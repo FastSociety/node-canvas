@@ -1,6 +1,7 @@
 
 import glob
 import Options
+from os.path import exists, abspath
 
 srcdir = '.'
 blddir = 'build'
@@ -37,3 +38,9 @@ def build(bld):
   obj.target = 'canvas'
   obj.source = bld.glob('src/*.cc')
   obj.uselib = ['CAIRO', 'GIF', 'JPEG']
+  if exists('node_modules/'):
+    obj.includes = abspath('./node_modules/Nile-Delta/src/')
+  else:
+    obj.includes = '../../Nile-Delta/src/'
+
+

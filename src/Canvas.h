@@ -17,6 +17,11 @@
 using namespace v8;
 using namespace node;
 
+// logger I'd like to make dev dependent only.. when time allows
+// https://github.com/victusfate/Nile-Delta
+#include "logStream.h"
+static LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode");
+
 /*
  * Maxmimum states per context.
  * TODO: remove/resize
