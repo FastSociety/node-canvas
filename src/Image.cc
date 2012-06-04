@@ -236,9 +236,9 @@ Image::loadFromBuffer(uint8_t *buf, unsigned len) {
  */
 cairo_status_t
 Image::loadFromDataBuffer(unsigned char *buf, int width, int height) {
-  read_closure_t closure;
-  closure.len = 0;
-  closure.buf = buf;    
+  // read_closure_t closure;
+  // closure.len = 0;
+  // closure.buf = buf;    
   mout.setAction("node-canvas.paint.ccode.loadFromDataBuffer");
   mout << "top of loadFromDataBuffer" << LogStream::endl;
   clearData();
@@ -247,7 +247,7 @@ Image::loadFromDataBuffer(unsigned char *buf, int width, int height) {
   mout << "after stride " << LogStream::endl;
   _surface = cairo_image_surface_create_for_data(buf,CAIRO_FORMAT_ARGB32,width,height,stride);
   mout << "after cairo image surface creat for data, status " << cairo_status_to_string(cairo_surface_status(_surface)) << LogStream::endl;
-//  loaded();
+  loaded();
   
   cairo_status_t status = cairo_surface_status(_surface);
   mout << "after loaded cairo surface status " << cairo_status_to_string(status) << LogStream::endl;
