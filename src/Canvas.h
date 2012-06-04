@@ -20,7 +20,11 @@ using namespace node;
 // logger I'd like to make dev dependent only.. when time allows
 // https://github.com/victusfate/Nile-Delta
 #include "logStream.h"
+
+#ifndef M_LOG_STREAM
+#define M_LOG_STREAM 
 static LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode");
+#endif
 
 /*
  * Maxmimum states per context.
