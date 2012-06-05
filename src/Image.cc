@@ -236,10 +236,10 @@ Image::loadFromBuffer(uint8_t *buf, unsigned len) {
  */
 cairo_status_t
 Image::loadFromDataBuffer(unsigned char *buf, int width, int height) {
+  LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.loadFromDataBuffer");    
   // read_closure_t closure;
   // closure.len = 0;
   // closure.buf = buf;    
-  mout.setAction("node-canvas.paint.ccode.loadFromDataBuffer");
   mout << "top of loadFromDataBuffer" << LogStream::endl;
   clearData();
   mout << "after clearData" << LogStream::endl;

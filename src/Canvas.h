@@ -23,7 +23,7 @@ using namespace node;
 
 #ifndef M_LOG_STREAM
 #define M_LOG_STREAM 
-static LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode");
+//static LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode");
 #endif
 
 /*
