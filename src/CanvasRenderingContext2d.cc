@@ -137,6 +137,11 @@ Context2d::Context2d(Canvas *canvas) {
   state->shadow = transparent_black;
   state->patternQuality = CAIRO_FILTER_GOOD;
   state->textDrawingMode = TEXT_DRAW_PATHS;
+  
+  LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Context2d.Constructor");    
+  mout << "Context2d::Context2d canvas pointer " << (void *)canvas << " context ptr " << (void *)_context;
+  mout << " state ptr " << (void *)state << LogStream::endl;
+  
 }
 
 /*

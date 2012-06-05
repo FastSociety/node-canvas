@@ -62,6 +62,9 @@ Canvas::New(const Arguments &args) {
     ? CANVAS_TYPE_PDF
     : CANVAS_TYPE_IMAGE;
   Canvas *canvas = new Canvas(width, height, type);
+  LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Canvas.new");    
+  mout << "Canvas::New canvas pointer alloc " << (void *)canvas << LogStream::endl;
+  
   canvas->Wrap(args.This());
   return args.This();
 }

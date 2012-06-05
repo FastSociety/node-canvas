@@ -69,6 +69,8 @@ Handle<Value>
 Image::New(const Arguments &args) {
   HandleScope scope;
   Image *img = new Image;
+  LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Image.new");    
+  mout << "Image::New img pointer alloc " << (void *)img << LogStream::endl;
   img->data_mode = DATA_IMAGE;
   img->Wrap(args.This());
   return args.This();
@@ -737,6 +739,12 @@ Image::decodeJPEGIntoSurface(jpeg_decompress_struct *info) {
   jpeg_finish_decompress(info);
   jpeg_destroy_decompress(info);
   status = cairo_surface_status(_surface);
+  
+  LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Image.decodeJPEGIntoSurface");    
+  mout << "Image::Context2d decodeJPEGIntoSurface ";
+  mout << " temporary pointer src " << (void *)src << " data pointer " << (void *)data;
+  mout << " _surface pointer " << (void *)_surface << LogStream::endl;
+  
 
   if (status) {
     free(data);
