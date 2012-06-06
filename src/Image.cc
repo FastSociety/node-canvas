@@ -32,6 +32,13 @@ typedef struct {
   uint8_t *buf;
 } read_closure_t;
 
+
+// struggling to this to link on linux side
+cairo_status_t CallLoadFromDataBuffer(Image *img, uint8_t *buf, int width, int height) {
+    return img->loadFromDataBuffer(buf,width,height);
+}
+
+
 /*
  * Initialize Image.
  */

@@ -95,9 +95,7 @@ class Image: public node::ObjectWrap {
 };
 
 extern "C" {
-    cairo_status_t CallLoadFromDataBuffer(Image *img, uint8_t *buf, int width, int height) {
-        return img->loadFromDataBuffer(buf,width,height);
-    }
+    cairo_status_t CallLoadFromDataBuffer(Image *img, uint8_t *buf, int width, int height);
 };
 
 #endif
