@@ -45,7 +45,7 @@ class Image: public node::ObjectWrap {
     inline int isComplete(){ return COMPLETE == state; }
     cairo_status_t loadSurface();
     cairo_status_t loadFromBuffer(uint8_t *buf, unsigned len);
-    cairo_status_t loadFromDataBuffer(unsigned char *buf, int width, int height);
+    cairo_status_t loadFromDataBuffer(uint8_t *buf, int width, int height);
     cairo_status_t loadPNGFromBuffer(uint8_t *buf);
     cairo_status_t loadPNG();
     void clearData();
