@@ -39,6 +39,10 @@ Canvas::Initialize(Handle<Object> target) {
   Local<ObjectTemplate> proto = constructor->PrototypeTemplate();
   NODE_SET_PROTOTYPE_METHOD(constructor, "toBuffer", ToBuffer);
   NODE_SET_PROTOTYPE_METHOD(constructor, "streamPNGSync", StreamPNGSync);
+
+  // NODE_SET_PROTOTYPE_METHOD(constructor, "toImage", ToImage);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "loadImage", LoadImage);
+
 #ifdef HAVE_JPEG
   NODE_SET_PROTOTYPE_METHOD(constructor, "streamJPEGSync", StreamJPEGSync);
 #endif
@@ -47,8 +51,6 @@ Canvas::Initialize(Handle<Object> target) {
   proto->SetAccessor(String::NewSymbol("height"), GetHeight, SetHeight);
   target->Set(String::NewSymbol("Canvas"), constructor->GetFunction());
 
-  // NODE_SET_PROTOTYPE_METHOD(constructor, "toImage", ToImage);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "loadImage", LoadImage);
 }
 
 /*
