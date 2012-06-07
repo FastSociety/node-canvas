@@ -239,18 +239,18 @@ Image::loadFromBuffer(uint8_t *buf, unsigned len) {
  */
 cairo_status_t
 Image::loadFromDataBuffer(uint8_t *buf, int width, int height) {
-  LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.loadFromDataBuffer");    
-  mout << "top of loadFromDataBuffer" << LogStream::endl;
+  // LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.loadFromDataBuffer");    
+  // mout << "top of loadFromDataBuffer" << LogStream::endl;
   this->clearData();
-  mout << "after clearData" << LogStream::endl;
+  // mout << "after clearData" << LogStream::endl;
   int stride = cairo_format_stride_for_width (CAIRO_FORMAT_ARGB32, width); // 4*width + ?
-  mout << "after stride " << LogStream::endl;
+  // mout << "after stride " << LogStream::endl;
   this->_surface = cairo_image_surface_create_for_data(buf,CAIRO_FORMAT_ARGB32,width,height,stride);
   this->data_mode = DATA_IMAGE;
-  mout << "after cairo image surface creat for data, status " << cairo_status_to_string(cairo_surface_status(_surface)) << LogStream::endl;
+  // mout << "after cairo image surface creat for data, status " << cairo_status_to_string(cairo_surface_status(_surface)) << LogStream::endl;
   this->loaded();
   cairo_status_t status = cairo_surface_status(_surface);
-  mout << "after loaded cairo surface status " << cairo_status_to_string(status) << LogStream::endl;
+  // mout << "after loaded cairo surface status " << cairo_status_to_string(status) << LogStream::endl;
   if (status) return status;
   return CAIRO_STATUS_SUCCESS;
 }
