@@ -30,7 +30,7 @@ cairo_status_t
 closure_init(closure_t *closure, Canvas *canvas) {
   closure->len = 0;
   closure->canvas = canvas;
-  closure->data = (uint8_t *) malloc(closure->max_len = 1228800);
+  closure->data = (uint8_t *) malloc(closure->max_len = 1024);
   if (!closure->data) return CAIRO_STATUS_NO_MEMORY;
   return CAIRO_STATUS_SUCCESS;
 }
