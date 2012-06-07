@@ -239,33 +239,33 @@ Image::loadFromBuffer(uint8_t *buf, unsigned len) {
  */
 cairo_status_t
 Image::loadFromDataBuffer(uint8_t *buf, int width, int height) {
-  timeval s0,s1,s2,s3,s4,s5;
-  gettimeofday(&s0,NULL);
+  // timeval s0,s1,s2,s3,s4,s5;
+  // gettimeofday(&s0,NULL);
   // LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.loadFromDataBuffer");    
-  gettimeofday(&s1,NULL);
+  // gettimeofday(&s1,NULL);
   // mout << "top of loadFromDataBuffer" << LogStream::endl;
   this->clearData();
-  gettimeofday(&s2,NULL);
+  // gettimeofday(&s2,NULL);
   // mout << "after clearData" << LogStream::endl;
   int stride = cairo_format_stride_for_width (CAIRO_FORMAT_ARGB32, width); // 4*width + ?
-  gettimeofday(&s3,NULL);
+  // gettimeofday(&s3,NULL);
   // mout << "after stride " << LogStream::endl;
   this->_surface = cairo_image_surface_create_for_data(buf,CAIRO_FORMAT_ARGB32,width,height,stride);
   this->data_mode = DATA_IMAGE;
   
-  gettimeofday(&s4,NULL);
+  // gettimeofday(&s4,NULL);
   // mout << "after cairo image surface creat for data, status " << cairo_status_to_string(cairo_surface_status(_surface)) << LogStream::endl;
   this->loaded();
   cairo_status_t status = cairo_surface_status(_surface);
-  gettimeofday(&s5,NULL);
+  // gettimeofday(&s5,NULL);
   // mout << "after loaded cairo surface status " << cairo_status_to_string(status) << LogStream::endl;
 
-  LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.loadFromDataBuffer");    
-  mout << " s1-s0 " << (s1.tv_sec - s0.tv_sec)*1000000 + (s1.tv_usec - s0.tv_usec);
-  mout << " s2-s1 " << (s2.tv_sec - s1.tv_sec)*1000000 + (s2.tv_usec - s1.tv_usec);
-  mout << " s3-s2 " << (s3.tv_sec - s2.tv_sec)*1000000 + (s3.tv_usec - s2.tv_usec);
-  mout << " s4-s3 " << (s4.tv_sec - s3.tv_sec)*1000000 + (s4.tv_usec - s3.tv_usec);
-  mout << " s5-s4 " << (s5.tv_sec - s4.tv_sec)*1000000 + (s5.tv_usec - s4.tv_usec) << LogStream::endl;
+  // LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.loadFromDataBuffer");    
+  // mout << " s1-s0 " << (s1.tv_sec - s0.tv_sec)*1000000 + (s1.tv_usec - s0.tv_usec);
+  // mout << " s2-s1 " << (s2.tv_sec - s1.tv_sec)*1000000 + (s2.tv_usec - s1.tv_usec);
+  // mout << " s3-s2 " << (s3.tv_sec - s2.tv_sec)*1000000 + (s3.tv_usec - s2.tv_usec);
+  // mout << " s4-s3 " << (s4.tv_sec - s3.tv_sec)*1000000 + (s4.tv_usec - s3.tv_usec);
+  // mout << " s5-s4 " << (s5.tv_sec - s4.tv_sec)*1000000 + (s5.tv_usec - s4.tv_usec) << LogStream::endl;
   if (status) return status;
   return CAIRO_STATUS_SUCCESS;
 }
