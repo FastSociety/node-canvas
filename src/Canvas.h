@@ -30,6 +30,8 @@ using namespace node;
 #define CANVAS_MAX_STATES 64
 #endif
 
+class Image;
+
 /*
  * Canvas types.
  */
@@ -81,6 +83,10 @@ class Canvas: public node::ObjectWrap {
     inline int stride(){ return cairo_image_surface_get_stride(_surface); }
     Canvas(int width, int height, canvas_type_t type);
     void resurface(Handle<Object> canvas);
+    
+    //static Handle<Value> ToImage(const Arguments &args);
+    static Handle<Value> LoadImage(const Arguments &args);
+    void loadImageData(Image *img);
 
   private:
     ~Canvas();

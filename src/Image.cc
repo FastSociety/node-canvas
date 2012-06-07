@@ -33,12 +33,6 @@ typedef struct {
 } read_closure_t;
 
 
-// struggling to this to link on linux side
-cairo_status_t CallLoadFromDataBuffer(Image *img, uint8_t *buf, int width, int height) {
-    return img->loadFromDataBuffer(buf,width,height);
-}
-
-
 /*
  * Initialize Image.
  */
@@ -247,13 +241,14 @@ cairo_status_t
 Image::loadFromDataBuffer(uint8_t *buf, int width, int height) {
   LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.loadFromDataBuffer");    
   mout << "top of loadFromDataBuffer" << LogStream::endl;
-  clearData();
+  this->clearData();
   mout << "after clearData" << LogStream::endl;
   int stride = cairo_format_stride_for_width (CAIRO_FORMAT_ARGB32, width); // 4*width + ?
   mout << "after stride " << LogStream::endl;
-  _surface = cairo_image_surface_create_for_data(buf,CAIRO_FORMAT_ARGB32,width,height,stride);
+  this->_surface = cairo_image_surface_create_for_data(buf,CAIRO_FORMAT_ARGB32,width,height,stride);
+  this->data_mode = DATA_IMAGE;
   mout << "after cairo image surface creat for data, status " << cairo_status_to_string(cairo_surface_status(_surface)) << LogStream::endl;
-  loaded();
+  this->loaded();
   cairo_status_t status = cairo_surface_status(_surface);
   mout << "after loaded cairo surface status " << cairo_status_to_string(status) << LogStream::endl;
   if (status) return status;

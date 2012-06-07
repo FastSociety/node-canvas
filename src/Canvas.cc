@@ -14,6 +14,7 @@
 #include <node_version.h>
 #include <cairo-pdf.h>
 #include "closure.h"
+#include "Image.h"
 
 #ifdef HAVE_JPEG
 #include "JPEGStream.h"
@@ -45,6 +46,9 @@ Canvas::Initialize(Handle<Object> target) {
   proto->SetAccessor(String::NewSymbol("width"), GetWidth, SetWidth);
   proto->SetAccessor(String::NewSymbol("height"), GetHeight, SetHeight);
   target->Set(String::NewSymbol("Canvas"), constructor->GetFunction());
+
+  // NODE_SET_PROTOTYPE_METHOD(constructor, "toImage", ToImage);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "loadImage", LoadImage);
 }
 
 /*
@@ -456,4 +460,75 @@ Canvas::resurface(Handle<Object> canvas) {
 Local<Value>
 Canvas::Error(cairo_status_t status) {
   return Exception::Error(String::New(cairo_status_to_string(status)));
+}
+
+
+/*
+ * allocate and return an Image
+ */
+
+ // /Users/messel/.nvm/v0.6.17/include/node/node_object_wrap.h: In static member function ‘static v8::Handle<v8::Value> Canvas::ToImage(const v8::Arguments&)’:
+ // /Users/messel/.nvm/v0.6.17/include/node/node_object_wrap.h:60: error: ‘void node::ObjectWrap::Wrap(v8::Handle<v8::Object>)’ is protected
+ // ../src/Canvas.cc:481: error: within this context
+
+//  Handle<Value>
+//  Canvas::ToImage(const Arguments &args) {
+//    HandleScope scope;
+// 
+//    LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Canvas.ToImage");    
+//    mout << "Canvas::ToImage top " << LogStream::endl;
+// 
+//    cairo_status_t status;
+//    Canvas *canvas = ObjectWrap::Unwrap<Canvas>(args.This());
+//    Image *img = new Image();     
+//    canvas->loadImageData(img);
+//    img->Wrap(args.This());
+//    mout << "Canvas::ToImage about to return loaded image" << LogStream::endl;
+//    return args.This();
+// }
+
+
+/*
+ * allocate and return an Image
+ */
+
+Handle<Value>
+ Canvas::LoadImage(const Arguments &args) {
+   HandleScope scope;
+   LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Canvas.LoadImage");    
+   mout << "Canvas::LoadImage top " << LogStream::endl;
+   
+   Canvas *canvas = ObjectWrap::Unwrap<Canvas>(args.This());
+   if (args.Length() < 1) {
+     mout << "Canvas::LoadImage Error requires one argument of Image type " << LogStream::endl;
+     return ThrowException(Exception::TypeError(String::New("Canvas::LoadImage requires one argument of Image type")));
+   }
+
+   Local<Object> obj = args[0]->ToObject();
+   Image *img = ObjectWrap::Unwrap<Image>(obj);
+   canvas->loadImageData(img);
+   return Undefined();
+}  
+
+void Canvas::loadImageData(Image *img) {
+  LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Canvas.loadImageData");    
+  if (this->isPDF()) {
+    mout << "Canvas::loadImageData pdf canvas type " << LogStream::endl;
+    cairo_surface_finish(this->surface());
+    closure_t *closure = (closure_t *) this->closure();
+
+    int w = cairo_image_surface_get_width(this->surface());
+    int h = cairo_image_surface_get_height(this->surface());
+
+    img->loadFromDataBuffer(closure->data,w,h);
+    mout << "Canvas::loadImageData pdf type, finished loading image" << LogStream::endl;
+  }
+  else {
+    mout << "Canvas::loadImageData data canvas type " << LogStream::endl;
+    int w = cairo_image_surface_get_width(this->surface());
+    int h = cairo_image_surface_get_height(this->surface());
+
+    img->loadFromDataBuffer(this->data(),w,h);
+    mout << "Canvas::loadImageData image type, finished loading image" << LogStream::endl;
+  }   
 }
