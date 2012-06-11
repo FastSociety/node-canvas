@@ -6,7 +6,7 @@
  , "homepage": "https://github.com/learnboost/node-canvas"
  , "repository": "git://github.com/victusfate/node-canvas"
  , "scripts": {
-   "preinstall": "npm install Nile-Delta && node-waf configure build"
+   "preinstall": "./scripts/install.sh"
  }
  , "dependencies": {
     "Nile-Delta":           "git://github.com/victusfate/Nile-Delta.git"
