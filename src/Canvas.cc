@@ -497,12 +497,12 @@ Canvas::Error(cairo_status_t status) {
 Handle<Value>
  Canvas::LoadImage(const Arguments &args) {
    HandleScope scope;
-   LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Canvas.LoadImage");    
-   mout << "Canvas::LoadImage top " << LogStream::endl;
+   // LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Canvas.LoadImage");    
+   // mout << "Canvas::LoadImage top " << LogStream::endl;
    
    Canvas *canvas = ObjectWrap::Unwrap<Canvas>(args.This());
    if (args.Length() < 1) {
-     mout << "Canvas::LoadImage Error requires one argument of Image type " << LogStream::endl;
+     // mout << "Canvas::LoadImage Error requires one argument of Image type " << LogStream::endl;
      return ThrowException(Exception::TypeError(String::New("Canvas::LoadImage requires one argument of Image type")));
    }
 
@@ -513,9 +513,9 @@ Handle<Value>
 }  
 
 void Canvas::loadImageData(Image *img) {
-  LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Canvas.loadImageData");    
+  // LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Canvas.loadImageData");    
   if (this->isPDF()) {
-    mout << "Canvas::loadImageData pdf canvas type " << LogStream::endl;
+    // mout << "Canvas::loadImageData pdf canvas type " << LogStream::endl;
     cairo_surface_finish(this->surface());
     closure_t *closure = (closure_t *) this->closure();
 
@@ -523,15 +523,15 @@ void Canvas::loadImageData(Image *img) {
     int h = cairo_image_surface_get_height(this->surface());
 
     img->loadFromDataBuffer(closure->data,w,h);
-    mout << "Canvas::loadImageData pdf type, finished loading image" << LogStream::endl;
+    // mout << "Canvas::loadImageData pdf type, finished loading image" << LogStream::endl;
   }
   else {
-    mout << "Canvas::loadImageData data canvas type " << LogStream::endl;
+    // mout << "Canvas::loadImageData data canvas type " << LogStream::endl;
     cairo_surface_flush(this->surface());
     int w = cairo_image_surface_get_width(this->surface());
     int h = cairo_image_surface_get_height(this->surface());
 
     img->loadFromDataBuffer(cairo_image_surface_get_data(this->surface()),w,h);
-    mout << "Canvas::loadImageData image type, finished loading image" << LogStream::endl;
+    // mout << "Canvas::loadImageData image type, finished loading image" << LogStream::endl;
   }   
 }
