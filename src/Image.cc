@@ -259,8 +259,7 @@ Image::loadFromDataBuffer(uint8_t *buf, int width, int height) {
   cairo_status_t status = cairo_surface_status(_surface);
   // gettimeofday(&s5,NULL);
   // mout << "after loaded cairo surface status " << cairo_status_to_string(status) << LogStream::endl;
-
-  // LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.loadFromDataBuffer");    
+  // 
   // mout << " s1-s0 " << (s1.tv_sec - s0.tv_sec)*1000000 + (s1.tv_usec - s0.tv_usec);
   // mout << " s2-s1 " << (s2.tv_sec - s1.tv_sec)*1000000 + (s2.tv_usec - s1.tv_usec);
   // mout << " s3-s2 " << (s3.tv_sec - s2.tv_sec)*1000000 + (s3.tv_usec - s2.tv_usec);

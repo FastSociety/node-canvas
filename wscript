@@ -29,7 +29,7 @@ def configure(conf):
     conf.env.append_value('LINKFLAGS', ['-pg'])
 
   conf.check_cfg(package='cairo', args='--cflags --libs', mandatory=True)
-  flags = ['-O3', '-Wall', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE']
+  flags = ['-O3', '-Wall', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-D_CANVAS_NODE_MODULE']
   conf.env.append_value('CCFLAGS', flags)
   conf.env.append_value('CXXFLAGS', flags)
 

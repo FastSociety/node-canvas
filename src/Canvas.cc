@@ -513,7 +513,8 @@ Handle<Value>
 }  
 
 void Canvas::loadImageData(Image *img) {
-  // LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Canvas.loadImageData");    
+   HandleScope scope;
+   // LogStream mout(LOG_DEBUG,"node-canvas.paint.ccode.Canvas.loadImageData");    
   if (this->isPDF()) {
     // mout << "Canvas::loadImageData pdf canvas type " << LogStream::endl;
     cairo_surface_finish(this->surface());
@@ -530,7 +531,7 @@ void Canvas::loadImageData(Image *img) {
     cairo_surface_flush(this->surface());
     int w = cairo_image_surface_get_width(this->surface());
     int h = cairo_image_surface_get_height(this->surface());
-
+    
     img->loadFromDataBuffer(cairo_image_surface_get_data(this->surface()),w,h);
     // mout << "Canvas::loadImageData image type, finished loading image" << LogStream::endl;
   }   

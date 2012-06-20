@@ -13,6 +13,8 @@
 #include "CanvasPattern.h"
 #include "CanvasRenderingContext2d.h"
 
+#ifdef _CANVAS_NODE_MODULE
+
 extern "C" void
 init (Handle<Object> target) {
   HandleScope scope;
@@ -27,3 +29,5 @@ init (Handle<Object> target) {
 }
 
 NODE_MODULE(canvas,init);
+
+#endif
