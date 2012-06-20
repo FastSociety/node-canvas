@@ -18,6 +18,7 @@
 extern "C" void
 init (Handle<Object> target) {
   HandleScope scope;
+  std::cout << "_CANVAS_NODE_MODULE is defined " << std::endl;
   Canvas::Initialize(target);
   Image::Initialize(target);
   ImageData::Initialize(target);
