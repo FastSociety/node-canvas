@@ -17,7 +17,7 @@
 using namespace v8;
 using namespace node;
 
-// logger I'd like to make dev dependent only.. when time allows
+// logger
 // https://github.com/victusfate/Nile-Delta
 #include "logStream.h"
 
