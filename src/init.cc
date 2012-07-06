@@ -13,10 +13,10 @@
 #include "CanvasPattern.h"
 #include "CanvasRenderingContext2d.h"
 
-#ifdef _CANVAS_NODE_MODULE
+// #ifdef _CANVAS_NODE_MODULE
 
 extern "C" void
-init (Handle<Object> target) {
+initCanvas (Handle<Object> target) {
   HandleScope scope;
   std::cout << "_CANVAS_NODE_MODULE is defined " << std::endl;
   Canvas::Initialize(target);
@@ -29,6 +29,6 @@ init (Handle<Object> target) {
   target->Set(String::New("cairoVersion"), String::New(cairo_version_string()));
 }
 
-NODE_MODULE(canvas,init);
+NODE_MODULE(canvas,initCanvas);
 
-#endif
+// #endif
