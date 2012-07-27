@@ -18,6 +18,10 @@
         'src/init.cc',
         'src/PixelArray.cc',
       ],
+      'include_dirs+': [
+        './node_modules/Nile-Delta/src/',
+        '../../Nile-Delta/src/'
+      ],
       'conditions': [
         ['OS=="win"', {
           'libraries': [
