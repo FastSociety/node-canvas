@@ -1,12 +1,13 @@
 {  "name": "canvas"
  , "description":  "Canvas graphics API backed by Cairo"
- , "version":  "0.12.0"
+ , "version":  "0.12.1"
  , "author": "TJ Holowaychuk <tj@learnboost.com>"
  , "keywords": ["canvas", "graphic", "graphics", "pixman", "cairo", "image", "images", "pdf"]
  , "homepage": "https://github.com/learnboost/node-canvas"
  , "repository": "git://github.com/victusfate/node-canvas"
  , "scripts": {
-   "preinstall": "./scripts/install.sh"
+   "preinstall": "./scripts/install.sh",
+   "test": "make test"
  }
  , "dependencies": {
     "Nile-Delta":           "git://github.com/victusfate/Nile-Delta.git"
@@ -17,6 +18,6 @@
    , "mocha": "*"
    , "should": "*"
  }
- , "engines": { "node": ">= 0.4.0 && < 0.9.0" }
+ , "engines": { "node": ">= 0.4.0" }
  , "main": "./lib/canvas.js"
 }
