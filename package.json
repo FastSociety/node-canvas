@@ -7,6 +7,7 @@
  , "repository": "git://github.com/victusfate/node-canvas"
  , "scripts": {
    "preinstall": "./scripts/install.sh",
+   "postinstall": "./scripts/post-install.sh",
    "test": "make test"
  }
  , "dependencies": {
