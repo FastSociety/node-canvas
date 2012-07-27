@@ -2,7 +2,7 @@
   'variables': {
     'GTK_Root%': 'C:/GTK',  # Set the location of GTK all-in-one bundle
     'with_jpeg%': 'true',
-    'with_gif%': 'false'
+    'with_gif%': 'true'
   },
   'targets': [
     {
