@@ -29,9 +29,9 @@ initCanvas (Handle<Object> target) {
   Pattern::Initialize(target);
   target->Set(String::New("cairoVersion"), String::New(cairo_version_string()));
 #ifdef HAVE_JPEG
-  char jpeg_version[10];
-  snprintf(jpeg_version, 10, "%d%c", JPEG_LIB_VERSION_MAJOR, JPEG_LIB_VERSION_MINOR + 'a' - 1);
-  target->Set(String::New("jpegVersion"), String::New(jpeg_version));
+  // char jpeg_version[10];
+  // snprintf(jpeg_version, 10, "%d%c", JPEG_LIB_VERSION_MAJOR, JPEG_LIB_VERSION_MINOR + 'a' - 1);
+  // target->Set(String::New("jpegVersion"), String::New(jpeg_version));
 #endif
 #ifdef HAVE_GIF
   target->Set(String::New("gifVersion"), String::New(GIF_LIB_VERSION));
