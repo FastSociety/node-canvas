@@ -917,7 +917,7 @@ Image::loadJPEG(FILE *stream) {
     buf = (uint8_t *) malloc(len);
     if (!buf) return CAIRO_STATUS_NO_MEMORY;
 
-    fread(buf, len, 1, stream);
+    (void)fread(buf, len, 1, stream);
     fclose(stream);
 
     if ((DATA_IMAGE | DATA_MIME) == data_mode) {
