@@ -887,7 +887,7 @@ Image::loadJPEGFromBuffer(uint8_t *buf, unsigned len) {
 
 cairo_status_t
 Image::loadJPEG(FILE *stream) {
-  cairo_status_t status;
+  cairo_status_t status = CAIRO_STATUS_SUCCESS;
 
   if (data_mode == DATA_IMAGE) { // Can lazily read in the JPEG.
     // JPEG setup

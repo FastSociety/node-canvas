@@ -129,7 +129,7 @@ Context2d::Context2d(Canvas *canvas) {
   state->textAlignment = -1;
   state->fillPattern = state->strokePattern = NULL;
   state->fillGradient = state->strokeGradient = NULL;
-  state->textBaseline = NULL;
+  state->textBaseline = 0;
   rgba_t transparent = { 0,0,0,1 };
   rgba_t transparent_black = { 0,0,0,0 };
   state->fill = transparent;
@@ -936,7 +936,7 @@ Handle<Value>
 Context2d::GetTextDrawingMode(Local<String> prop, const AccessorInfo &info) {
   HandleScope scope;
   Context2d *context = ObjectWrap::Unwrap<Context2d>(info.This());
-  const char *mode;
+  const char *mode = "";
   if (context->state->textDrawingMode == TEXT_DRAW_PATHS) {
     mode = "path";
   } else if (context->state->textDrawingMode == TEXT_DRAW_GLYPHS) {
