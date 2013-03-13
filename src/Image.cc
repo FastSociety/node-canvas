@@ -722,12 +722,20 @@ Image::decodeJPEGIntoSurface(jpeg_decompress_struct *info) {
     jpeg_read_scanlines(info, &src, 1);
     uint32_t *row = (uint32_t *)(data + stride * y);
     for (int x = 0; x < width; ++x) {
-      int bx = 3 * x;
-      uint32_t *pixel = row + x;
-      *pixel = 255 << 24
-        | src[bx + 0] << 16
-        | src[bx + 1] << 8
-        | src[bx + 2];
+      if (info->jpeg_color_space == 1) {
+        uint32_t *pixel = row + x;
+        *pixel = 255 << 24
+          | src[x] << 16
+          | src[x] << 8
+          | src[x];
+      } else {
+        int bx = 3 * x;
+        uint32_t *pixel = row + x;
+        *pixel = 255 << 24
+          | src[bx + 0] << 16
+          | src[bx + 1] << 8
+          | src[bx + 2];	
+      }
     }
   }
 
@@ -917,18 +925,21 @@ Image::loadJPEG(FILE *stream) {
     buf = (uint8_t *) malloc(len);
     if (!buf) return CAIRO_STATUS_NO_MEMORY;
 
-    ignore_return<size_t>(fread(buf, len, 1, stream));
-    
-    fclose(stream);
-
-    if ((DATA_IMAGE | DATA_MIME) == data_mode) {
+    if (fread(buf, len, 1, stream) != len) {
+      status = CAIRO_STATUS_READ_ERROR;
+    } else if ((DATA_IMAGE | DATA_MIME) == data_mode) {
       status = loadJPEGFromBuffer(buf, len);
       if (!status) status = assignDataAsMime(buf, len, CAIRO_MIME_TYPE_JPEG);
     } else if (DATA_MIME == data_mode) {
       status = decodeJPEGBufferIntoMimeSurface(buf, len);
+    } else {
+      status = CAIRO_STATUS_READ_ERROR;
     }
 
+    fclose(stream);
     free(buf);
+#else
+    status = CAIRO_STATUS_READ_ERROR;
 #endif
   }
 

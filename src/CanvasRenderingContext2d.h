@@ -12,6 +12,15 @@
 #include "Canvas.h"
 #include "CanvasGradient.h"
 
+#ifdef HAVE_FREETYPE
+#include <ft2build.h>
+#include <cairo-ft.h>
+#include FT_FREETYPE_H
+#endif
+
+#include <vector>
+using namespace std;
+
 typedef enum {
   TEXT_DRAW_PATHS,
   TEXT_DRAW_GLYPHS
@@ -40,7 +49,19 @@ typedef struct {
   double shadowOffsetX;
   double shadowOffsetY;
   canvas_draw_mode_t textDrawingMode;
+
+#if HAVE_PANGO
+  PangoWeight fontWeight;
+  PangoStyle fontStyle;
+  double fontSize;
+  char *fontFamily;
+#endif
+
 } canvas_state_t;
+
+#if HAVE_PANGO
+void state_assign_fontFamily(canvas_state_t *state, const char *str);
+#endif
 
 class Context2d: public node::ObjectWrap {
   public:
@@ -70,6 +91,9 @@ class Context2d: public node::ObjectWrap {
     static Handle<Value> FillText(const Arguments &args);
     static Handle<Value> StrokeText(const Arguments &args);
     static Handle<Value> SetFont(const Arguments &args);
+#ifdef HAVE_FREETYPE
+    static Handle<Value> SetFontFace(const Arguments &args);
+#endif
     static Handle<Value> SetFillColor(const Arguments &args);
     static Handle<Value> SetStrokeColor(const Arguments &args);
     static Handle<Value> SetFillPattern(const Arguments &args);
@@ -134,11 +158,19 @@ class Context2d: public node::ObjectWrap {
     void save();
     void restore();
 
+#if HAVE_PANGO
+    void setFontFromState();
+    inline PangoLayout *layout(){ return _layout; }
+#endif
+
   private:
     ~Context2d();
     Canvas *_canvas;
     cairo_t *_context;
     cairo_path_t *_path;
+#if HAVE_PANGO
+    PangoLayout *_layout;
+#endif
 };
 
 #endif

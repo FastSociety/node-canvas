@@ -16,6 +16,10 @@
 #include "CanvasGradient.h"
 #include "CanvasPattern.h"
 
+#ifdef HAVE_FREETYPE
+#include "FontFace.h"
+#endif
+
 Persistent<FunctionTemplate> Context2d::constructor;
 
 /*
@@ -44,6 +48,29 @@ enum {
   , TEXT_BASELINE_IDEOGRAPHIC
   , TEXT_BASELINE_HANGING
 };
+
+#if HAVE_PANGO
+
+/*
+ * State helper function
+ */
+
+void state_assign_fontFamily(canvas_state_t *state, const char *str) {
+  free(state->fontFamily);
+  state->fontFamily = strndup(str, 100);
+}
+
+
+/*
+ * Simple helper macro for a rather verbose function call.
+ */
+
+#define PANGO_LAYOUT_GET_METRICS(LAYOUT) pango_context_get_metrics( \
+   pango_layout_get_context(LAYOUT), \
+   pango_layout_get_font_description(LAYOUT), \
+   pango_context_get_language(pango_layout_get_context(LAYOUT)))
+
+#endif
 
 /*
  * Initialize Context2d.
@@ -90,6 +117,9 @@ Context2d::Initialize(Handle<Object> target) {
   NODE_SET_PROTOTYPE_METHOD(constructor, "arc", Arc);
   NODE_SET_PROTOTYPE_METHOD(constructor, "arcTo", ArcTo);
   NODE_SET_PROTOTYPE_METHOD(constructor, "_setFont", SetFont);
+#ifdef HAVE_FREETYPE
+  NODE_SET_PROTOTYPE_METHOD(constructor, "_setFontFace", SetFontFace);
+#endif
   NODE_SET_PROTOTYPE_METHOD(constructor, "_setFillColor", SetFillColor);
   NODE_SET_PROTOTYPE_METHOD(constructor, "_setStrokeColor", SetStrokeColor);
   NODE_SET_PROTOTYPE_METHOD(constructor, "_setFillPattern", SetFillPattern);
@@ -121,6 +151,9 @@ Context2d::Initialize(Handle<Object> target) {
 Context2d::Context2d(Canvas *canvas) {
   _canvas = canvas;
   _context = cairo_create(canvas->surface());
+#if HAVE_PANGO
+  _layout = pango_cairo_create_layout(_context);
+#endif
   cairo_set_line_width(_context, 1);
   state = states[stateno = 0] = (canvas_state_t *) malloc(sizeof(canvas_state_t));
   state->shadowBlur = 0;
@@ -129,7 +162,8 @@ Context2d::Context2d(Canvas *canvas) {
   state->textAlignment = -1;
   state->fillPattern = state->strokePattern = NULL;
   state->fillGradient = state->strokeGradient = NULL;
-  state->textBaseline = 0;
+
+  state->textBaseline = TEXT_BASELINE_ALPHABETIC;
   rgba_t transparent = { 0,0,0,1 };
   rgba_t transparent_black = { 0,0,0,0 };
   state->fill = transparent;
@@ -142,6 +176,14 @@ Context2d::Context2d(Canvas *canvas) {
   // mout << "Context2d::Context2d canvas pointer " << (void *)canvas << " context ptr " << (void *)_context;
   // mout << " state ptr " << (void *)state << LogStream::endl;
   
+#if HAVE_PANGO
+  state->fontWeight = PANGO_WEIGHT_NORMAL;
+  state->fontStyle = PANGO_STYLE_NORMAL;
+  state->fontSize = 10;
+  state->fontFamily = NULL;
+  state_assign_fontFamily(state, "sans serif");
+  setFontFromState();
+#endif
 }
 
 /*
@@ -149,7 +191,15 @@ Context2d::Context2d(Canvas *canvas) {
  */
 
 Context2d::~Context2d() {
-  while(stateno >= 0) free(states[stateno--]);
+  while(stateno >= 0) {
+#if HAVE_PANGO
+    free(states[stateno]->fontFamily);
+#endif
+    free(states[stateno--]);
+  }
+#if HAVE_PANGO
+  g_object_unref(_layout);
+#endif
   cairo_destroy(_context);
 }
 
@@ -182,6 +232,9 @@ Context2d::saveState() {
   if (stateno == CANVAS_MAX_STATES) return;
   states[++stateno] = (canvas_state_t *) malloc(sizeof(canvas_state_t));
   memcpy(states[stateno], state, sizeof(canvas_state_t));
+#if HAVE_PANGO
+  states[stateno]->fontFamily = strndup(state->fontFamily, 100);
+#endif
   state = states[stateno];
 }
 
@@ -193,9 +246,15 @@ void
 Context2d::restoreState() {
   if (0 == stateno) return;
   // Olaf (2011-02-21): Free old state data
+#if HAVE_PANGO
+  free(states[stateno]->fontFamily);
+#endif
   free(states[stateno]);
   states[stateno] = NULL;
   state = states[--stateno];
+#if HAVE_PANGO
+  setFontFromState();
+#endif
 }
 
 /*
@@ -226,8 +285,8 @@ Context2d::restorePath() {
 void
 Context2d::fill(bool preserve) {
   if (state->fillPattern) {
-    cairo_set_source(_context, state->fillPattern); 
-    cairo_pattern_set_extend(cairo_get_source(_context), CAIRO_EXTEND_REPEAT); 
+    cairo_set_source(_context, state->fillPattern);
+    cairo_pattern_set_extend(cairo_get_source(_context), CAIRO_EXTEND_REPEAT);
     // TODO repeat/repeat-x/repeat-y
   } else if (state->fillGradient) {
     cairo_pattern_set_filter(state->fillGradient, state->patternQuality);
@@ -254,8 +313,8 @@ Context2d::fill(bool preserve) {
 void
 Context2d::stroke(bool preserve) {
   if (state->strokePattern) {
-    cairo_set_source(_context, state->strokePattern); 
-    cairo_pattern_set_extend(cairo_get_source(_context), CAIRO_EXTEND_REPEAT); 
+    cairo_set_source(_context, state->strokePattern);
+    cairo_pattern_set_extend(cairo_get_source(_context), CAIRO_EXTEND_REPEAT);
   } else if (state->strokeGradient) {
     cairo_pattern_set_filter(state->strokeGradient, state->patternQuality);
     cairo_set_source(_context, state->strokeGradient);
@@ -350,15 +409,15 @@ Context2d::blur(cairo_surface_t *surface, int radius) {
   // get width, height
   int width = cairo_image_surface_get_width( surface );
   int height = cairo_image_surface_get_height( surface );
-  unsigned* precalc = 
+  unsigned* precalc =
       (unsigned*)malloc(width*height*sizeof(unsigned));
   unsigned char* src = cairo_image_surface_get_data( surface );
   double mul=1.f/((radius*2)*(radius*2));
   int channel;
-  
+
   // The number of times to perform the averaging. According to wikipedia,
   // three iterations is good enough to pass for a gaussian.
-  const int MAX_ITERATIONS = 3; 
+  const int MAX_ITERATIONS = 3;
   int iteration;
 
   for ( iteration = 0; iteration < MAX_ITERATIONS; iteration++ ) {
@@ -389,7 +448,7 @@ Context2d::blur(cairo_surface_t *surface, int radius) {
                   int t = y < radius ? 0 : y - radius;
                   int r = x + radius >= width ? width - 1 : x + radius;
                   int b = y + radius >= height ? height - 1 : y + radius;
-                  int tot = precalc[r+b*width] + precalc[l+t*width] - 
+                  int tot = precalc[r+b*width] + precalc[l+t*width] -
                       precalc[l+b*width] - precalc[r+t*width];
                   *pix=(unsigned char)(tot*mul);
                   pix += 4;
@@ -452,7 +511,7 @@ Context2d::PutImageData(const Arguments &args) {
   Context2d *context = ObjectWrap::Unwrap<Context2d>(args.This());
   ImageData *imageData = ObjectWrap::Unwrap<ImageData>(obj);
   PixelArray *arr = imageData->pixelArray();
-  
+
   uint8_t *src = arr->data();
   uint8_t *dst = context->canvas()->data();
 
@@ -487,8 +546,8 @@ Context2d::PutImageData(const Arguments &args) {
       if (sw <= 0 || sh <= 0) return Undefined();
       cols = sw;
       rows = sh;
-      dx += sx; 
-      dy += sy; 
+      dx += sx;
+      dy += sy;
       break;
     default:
       return ThrowException(Exception::Error(String::New("invalid arguments")));
@@ -941,6 +1000,8 @@ Context2d::GetTextDrawingMode(Local<String> prop, const AccessorInfo &info) {
     mode = "path";
   } else if (context->state->textDrawingMode == TEXT_DRAW_GLYPHS) {
     mode = "glyph";
+  } else {
+    mode = "unknown";
   }
   return scope.Close(String::NewSymbol(mode));
 }
@@ -1377,7 +1438,7 @@ Context2d::Transform(const Arguments &args) {
 
   Context2d *context = ObjectWrap::Unwrap<Context2d>(args.This());
   cairo_transform(context->context(), &matrix);
-  
+
   return Undefined();
 }
 
@@ -1495,14 +1556,14 @@ Context2d::FillText(const Arguments &args) {
 Handle<Value>
 Context2d::StrokeText(const Arguments &args) {
   HandleScope scope;
-  
+
   if (!args[1]->IsNumber()
     || !args[2]->IsNumber()) return Undefined();
 
   String::Utf8Value str(args[0]->ToString());
   double x = args[1]->NumberValue();
   double y = args[2]->NumberValue();
-  
+
   Context2d *context = ObjectWrap::Unwrap<Context2d>(args.This());
 
   context->savePath();
@@ -1524,6 +1585,53 @@ Context2d::StrokeText(const Arguments &args) {
 
 void
 Context2d::setTextPath(const char *str, double x, double y) {
+#if HAVE_PANGO
+
+  PangoRectangle ink_rect, logical_rect;
+  PangoFontMetrics *metrics = NULL;
+
+  pango_layout_set_text(_layout, str, -1);
+  pango_cairo_update_layout(_context, _layout);
+
+  switch (state->textAlignment) {
+    // center
+    case 0:
+      pango_layout_get_pixel_extents(_layout, &ink_rect, &logical_rect);
+      x -= logical_rect.width / 2;
+      break;
+    // right
+    case 1:
+      pango_layout_get_pixel_extents(_layout, &ink_rect, &logical_rect);
+      x -= logical_rect.width;
+      break;
+  }
+
+  switch (state->textBaseline) {
+    case TEXT_BASELINE_ALPHABETIC:
+      metrics = PANGO_LAYOUT_GET_METRICS(_layout);
+      y -= pango_font_metrics_get_ascent(metrics) / PANGO_SCALE;
+      break;
+    case TEXT_BASELINE_MIDDLE:
+      metrics = PANGO_LAYOUT_GET_METRICS(_layout);
+      y -= (pango_font_metrics_get_ascent(metrics) + pango_font_metrics_get_descent(metrics))/(2.0 * PANGO_SCALE);
+      break;
+    case TEXT_BASELINE_BOTTOM:
+      metrics = PANGO_LAYOUT_GET_METRICS(_layout);
+      y -= (pango_font_metrics_get_ascent(metrics) + pango_font_metrics_get_descent(metrics)) / PANGO_SCALE;
+      break;
+  }
+
+  if (metrics) pango_font_metrics_unref(metrics);
+
+  cairo_move_to(_context, x, y);
+  if (state->textDrawingMode == TEXT_DRAW_PATHS) {
+    pango_cairo_layout_path(_context, _layout);
+  } else if (state->textDrawingMode == TEXT_DRAW_GLYPHS) {
+    pango_cairo_show_layout(_context, _layout);
+  }
+
+#else
+
   cairo_text_extents_t te;
   cairo_font_extents_t fe;
 
@@ -1572,6 +1680,8 @@ Context2d::setTextPath(const char *str, double x, double y) {
   } else if (state->textDrawingMode == TEXT_DRAW_GLYPHS) {
     cairo_show_text(_context, str);
   }
+
+#endif
 }
 
 /*
@@ -1582,9 +1692,9 @@ Handle<Value>
 Context2d::LineTo(const Arguments &args) {
   HandleScope scope;
 
-  if (!args[0]->IsNumber()) 
+  if (!args[0]->IsNumber())
     return ThrowException(Exception::TypeError(String::New("lineTo() x must be a number")));
-  if (!args[1]->IsNumber()) 
+  if (!args[1]->IsNumber())
     return ThrowException(Exception::TypeError(String::New("lineTo() y must be a number")));
 
   Context2d *context = ObjectWrap::Unwrap<Context2d>(args.This());
@@ -1603,9 +1713,9 @@ Handle<Value>
 Context2d::MoveTo(const Arguments &args) {
   HandleScope scope;
 
-  if (!args[0]->IsNumber()) 
+  if (!args[0]->IsNumber())
     return ThrowException(Exception::TypeError(String::New("moveTo() x must be a number")));
-  if (!args[1]->IsNumber()) 
+  if (!args[1]->IsNumber())
     return ThrowException(Exception::TypeError(String::New("moveTo() y must be a number")));
 
   Context2d *context = ObjectWrap::Unwrap<Context2d>(args.This());
@@ -1615,6 +1725,38 @@ Context2d::MoveTo(const Arguments &args) {
 
   return Undefined();
 }
+
+/*
+ * Set font face.
+ */
+
+#ifdef HAVE_FREETYPE
+Handle<Value>
+Context2d::SetFontFace(const Arguments &args) {
+  HandleScope scope;
+
+  // Ignore invalid args
+  if (!args[0]->IsObject()
+    || !args[1]->IsNumber())
+    return ThrowException(Exception::TypeError(String::New("Expected object and number")));
+
+  Local<Object> obj = args[0]->ToObject();
+
+  if (!FontFace::constructor->HasInstance(obj))
+    return ThrowException(Exception::TypeError(String::New("FontFace expected")));
+
+  FontFace *face = ObjectWrap::Unwrap<FontFace>(obj);
+  double size = args[1]->NumberValue();
+
+  Context2d *context = ObjectWrap::Unwrap<Context2d>(args.This());
+  cairo_t *ctx = context->context();
+
+  cairo_set_font_size(ctx, size);
+  cairo_set_font_face(ctx, face->cairoFace());
+
+  return Undefined();
+}
+#endif
 
 /*
  * Set font:
@@ -1641,8 +1783,53 @@ Context2d::SetFont(const Arguments &args) {
   double size = args[2]->NumberValue();
   String::AsciiValue unit(args[3]);
   String::AsciiValue family(args[4]);
-  
+
   Context2d *context = ObjectWrap::Unwrap<Context2d>(args.This());
+
+#if HAVE_PANGO
+
+  if (strlen(*family) > 0) state_assign_fontFamily(context->state, *family);
+
+  if (size > 0) context->state->fontSize = size;
+
+  PangoStyle s = PANGO_STYLE_NORMAL;
+  if (strlen(*style) > 0) {
+    if (0 == strcmp("italic", *style)) {
+      s = PANGO_STYLE_ITALIC;
+    } else if (0 == strcmp("oblique", *style)) {
+      s = PANGO_STYLE_OBLIQUE;
+    }
+  }
+  context->state->fontStyle = s;
+
+  PangoWeight w = PANGO_WEIGHT_NORMAL;
+  if (strlen(*weight) > 0) {
+    if (0 == strcmp("bold", *weight)) {
+      w = PANGO_WEIGHT_BOLD;
+    } else if (0 == strcmp("200", *weight)) {
+      w = PANGO_WEIGHT_ULTRALIGHT;
+    } else if (0 == strcmp("300", *weight)) {
+      w = PANGO_WEIGHT_LIGHT;
+    } else if (0 == strcmp("400", *weight)) {
+      w = PANGO_WEIGHT_NORMAL;
+    } else if (0 == strcmp("500", *weight)) {
+      w = PANGO_WEIGHT_MEDIUM;
+    } else if (0 == strcmp("600", *weight)) {
+      w = PANGO_WEIGHT_SEMIBOLD;
+    } else if (0 == strcmp("700", *weight)) {
+      w = PANGO_WEIGHT_BOLD;
+    } else if (0 == strcmp("800", *weight)) {
+      w = PANGO_WEIGHT_ULTRABOLD;
+    } else if (0 == strcmp("900", *weight)) {
+      w = PANGO_WEIGHT_HEAVY;
+    }
+  }
+  context->state->fontWeight = w;
+
+  context->setFontFromState();
+
+#else
+
   cairo_t *ctx = context->context();
 
   // Size
@@ -1663,9 +1850,32 @@ Context2d::SetFont(const Arguments &args) {
   }
 
   cairo_select_font_face(ctx, *family, s, w);
-  
+
+#endif
+
   return Undefined();
 }
+
+#if HAVE_PANGO
+
+/*
+ * Sets PangoLayout options from the current font state
+ */
+
+void
+Context2d::setFontFromState() {
+  PangoFontDescription *fd = pango_font_description_new();
+
+  pango_font_description_set_family(fd, state->fontFamily);
+  pango_font_description_set_absolute_size(fd, state->fontSize * PANGO_SCALE);
+  pango_font_description_set_style(fd, state->fontStyle);
+  pango_font_description_set_weight(fd, state->fontWeight);
+
+  pango_layout_set_font_description(_layout, fd);
+  pango_font_description_free(fd);
+}
+
+#endif
 
 /*
  * Return the given text extents.
@@ -1684,13 +1894,71 @@ Context2d::MeasureText(const Arguments &args) {
   String::Utf8Value str(args[0]->ToString());
   Local<Object> obj = Object::New();
 
+#if HAVE_PANGO
+
+  PangoRectangle ink_rect, logical_rect;
+  PangoFontMetrics *metrics;
+  PangoLayout *layout = context->layout();
+
+  pango_layout_set_text(layout, *str, -1);
+  pango_cairo_update_layout(ctx, layout);
+
+  pango_layout_get_pixel_extents(layout, &ink_rect, &logical_rect);
+  metrics = PANGO_LAYOUT_GET_METRICS(layout);
+
+  double x_offset;
+  switch (context->state->textAlignment) {
+    case 0: // center
+      x_offset = logical_rect.width / 2;
+      break;
+    case 1: // right
+      x_offset = logical_rect.width;
+      break;
+    default: // left
+      x_offset = 0.0;
+  }
+
+  double y_offset;
+  switch (context->state->textBaseline) {
+    case TEXT_BASELINE_ALPHABETIC:
+      y_offset = -pango_font_metrics_get_ascent(metrics) / PANGO_SCALE;
+      break;
+    case TEXT_BASELINE_MIDDLE:
+      y_offset = -(pango_font_metrics_get_ascent(metrics) + pango_font_metrics_get_descent(metrics))/(2.0 * PANGO_SCALE);
+      break;
+    case TEXT_BASELINE_BOTTOM:
+      y_offset = -(pango_font_metrics_get_ascent(metrics) + pango_font_metrics_get_descent(metrics)) / PANGO_SCALE;
+      break;
+    default:
+      y_offset = 0.0;
+  }
+
+  obj->Set(String::New("width"), Number::New(logical_rect.width));
+  obj->Set(String::New("actualBoundingBoxLeft"),
+           Number::New(x_offset - PANGO_LBEARING(logical_rect)));
+  obj->Set(String::New("actualBoundingBoxRight"),
+           Number::New(x_offset + PANGO_RBEARING(logical_rect)));
+  obj->Set(String::New("actualBoundingBoxAscent"),
+           Number::New(-(y_offset+ink_rect.y)));
+  obj->Set(String::New("actualBoundingBoxDescent"),
+           Number::New((PANGO_DESCENT(ink_rect) + y_offset)));
+  obj->Set(String::New("emHeightAscent"),
+           Number::New(PANGO_ASCENT(logical_rect) - y_offset));
+  obj->Set(String::New("emHeightDescent"),
+           Number::New(PANGO_DESCENT(logical_rect) + y_offset));
+  obj->Set(String::New("alphabeticBaseline"),
+           Number::New((pango_font_metrics_get_ascent(metrics) / PANGO_SCALE)
+                       + y_offset));
+
+  pango_font_metrics_unref(metrics);
+
+#else
+
   cairo_text_extents_t te;
   cairo_font_extents_t fe;
 
   cairo_text_extents(ctx, *str, &te);
   cairo_font_extents(ctx, &fe);
-
-  obj->Set(String::New("width"), Number::New(te.x_advance));
 
   double x_offset;
   switch (context->state->textAlignment) {
@@ -1703,9 +1971,6 @@ Context2d::MeasureText(const Arguments &args) {
     default: // left
       x_offset = 0.0;
   }
-
-  obj->Set(String::New("actualBoundingBoxLeft"), Number::New(x_offset - te.x_bearing));
-  obj->Set(String::New("actualBoundingBoxRight"), Number::New((te.x_bearing + te.width) - x_offset));
 
   double y_offset;
   switch (context->state->textBaseline) {
@@ -1722,12 +1987,21 @@ Context2d::MeasureText(const Arguments &args) {
     default:
       y_offset = 0.0;
   }
-  obj->Set(String::New("actualBoundingBoxAscent"), Number::New(-(te.y_bearing + y_offset)));
-  obj->Set(String::New("actualBoundingBoxDescent"), Number::New(te.height + te.y_bearing + y_offset));
-  
+
+  obj->Set(String::New("width"), Number::New(te.x_advance));
+  obj->Set(String::New("actualBoundingBoxLeft"),
+           Number::New(x_offset - te.x_bearing));
+  obj->Set(String::New("actualBoundingBoxRight"),
+           Number::New((te.x_bearing + te.width) - x_offset));
+  obj->Set(String::New("actualBoundingBoxAscent"),
+           Number::New(-(te.y_bearing + y_offset)));
+  obj->Set(String::New("actualBoundingBoxDescent"),
+           Number::New(te.height + te.y_bearing + y_offset));
   obj->Set(String::New("emHeightAscent"), Number::New(fe.ascent - y_offset));
   obj->Set(String::New("emHeightDescent"), Number::New(fe.descent + y_offset));
-  obj->Set(String::New("alphabeticBaseline"), Number::New(-y_offset));
+  obj->Set(String::New("alphabeticBaseline"), Number::New(y_offset));
+
+#endif
 
   return scope.Close(obj);
 }
