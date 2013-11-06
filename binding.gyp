@@ -40,103 +40,30 @@
       'cflags_cc!': [ '-fno-exceptions' ],
       'conditions': [
         ['OS=="mac"', {
-          'xcode_settings': {
-            'GCC_ENABLE_CPP_EXCEPTIONS': 'YES'
-          }
-        }]
-      ],      
-      'conditions': [
-        ['OS=="win"', {
           'libraries': [
-            '-l<(GTK_Root)/lib/cairo.lib'
+           '<!@(pkg-config pixman-1 --libs)',          
+            '-lcairo',
+            '-lcairomm-1.0',           
+            '-ljpeg',
+            '-lc++ -lc++abi'            
           ],
-          'include_dirs': [
-            '<(GTK_Root)/include',
-          ],
-          'defines': [
-            'snprintf=_snprintf',
-            '_USE_MATH_DEFINES' # for M_PI
-          ]
-        }, { # 'OS!="win"'
+          'xcode_settings': {
+            'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
+            'OTHER_CFLAGS': [ '-g', '-mmacosx-version-min=10.7', '-std=c++11', '-stdlib=libc++', '-O3', '-D__STDC_CONSTANT_MACROS', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-Wall' ],
+            'OTHER_CPLUSPLUSFLAGS': [ '-g', '-mmacosx-version-min=10.7', '-std=c++11', '-stdlib=libc++', '-O3', '-D__STDC_CONSTANT_MACROS', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-Wall' ]
+          }
+        }],
+        ['OS=="linux"', {
           'libraries': [
             '<!@(pkg-config pixman-1 --libs)',
-            '<!@(pkg-config cairo --libs)'
+            '<!@(pkg-config cairo --libs)',
+            '-ljpeg'
           ],
           'include_dirs': [
             '<!@(pkg-config cairo --cflags-only-I | sed s/-I//g)'
-          ]
-        }],
-        ['with_freetype=="true"', {
-          'defines': [
-            'HAVE_FREETYPE'
-          ],
-          'sources': [
-            'src/FontFace.cc'
-          ],
-          'conditions': [
-            ['OS=="win"', {
-              # No support for windows right now.
-            }, { # 'OS!="win"'
-              'include_dirs': [ # tried to pass through cflags but failed.
-                # Need to include the header files of cairo AND freetype.
-                # Looking up the includes of cairo does both.
-                '<!@(pkg-config cairo --cflags-only-I | sed s/-I//g)'
-              ]
-            }]
-          ]
-        }],
-        ['with_pango=="true"', {
-          'defines': [
-            'HAVE_PANGO'
-          ],
-          'conditions': [
-            ['OS=="win"', {
-              'libraries': [
-                '-l<(GTK_Root)/lib/pangocairo.lib'
-              ]
-            }, { # 'OS!="win"'
-              'include_dirs': [ # tried to pass through cflags but failed
-                '<!@(pkg-config pangocairo --cflags-only-I | sed s/-I//g)'
-              ],
-              'libraries': [
-                '<!@(pkg-config pangocairo --libs)'
-              ]
-            }]
-          ]
-        }],
-        ['with_jpeg=="true"', {
-          'defines': [
-            'HAVE_JPEG'
-          ],
-          'conditions': [
-            ['OS=="win"', {
-              'libraries': [
-                '-l<(GTK_Root)/lib/jpeg.lib'
-              ]
-            }, {
-              'libraries': [
-                '-ljpeg'
-              ]
-            }]
-          ]
-        }],
-        ['with_gif=="true"', {
-          'defines': [
-            'HAVE_GIF'
-          ],
-          'conditions': [
-            ['OS=="win"', {
-              'libraries': [
-                '-l<(GTK_Root)/lib/gif.lib'
-              ]
-            }, {
-              'libraries': [
-                '-lgif'
-              ]
-            }]
-          ]
+          ]        
         }]
-      ]
+      ]   
     }
   ]
 }
