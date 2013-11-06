@@ -36,6 +36,9 @@
         './node_modules/Nile-Delta/src/',
         '../../Nile-Delta/src/'
       ],
+      'defines': [
+        'HAVE_JPEG'
+      ],
       'cflags!': [ '-fno-exceptions' ],
       'cflags_cc!': [ '-fno-exceptions' ],
       'conditions': [
