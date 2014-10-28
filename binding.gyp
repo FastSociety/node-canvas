@@ -48,7 +48,7 @@
           'libraries': [
            '<!@(pkg-config pixman-1 --libs)',  
            '<!@(pkg-config --libs cairomm-1.0)',
-           '-L/usr/local/Cellar/jpeg/8d/lib -ljpeg',        
+           '-L/usr/local/lib -ljpeg',        
             '-lc++ -lc++abi'            
           ],
           'xcode_settings': {
