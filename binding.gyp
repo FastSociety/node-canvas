@@ -34,7 +34,8 @@
       ],
       'include_dirs+': [
         './node_modules/Nile-Delta/src/',
-        '../../Nile-Delta/src/'
+        '../../Nile-Delta/src/',
+        '/usr/local/include'
       ],
       'defines': [
         'HAVE_JPEG'
@@ -45,10 +46,9 @@
       'conditions': [
         ['OS=="mac"', {
           'libraries': [
-           '<!@(pkg-config pixman-1 --libs)',          
-            '-lcairo',
-            '-lcairomm-1.0',           
-            '-ljpeg',
+           '<!@(pkg-config pixman-1 --libs)',  
+           '<!@(pkg-config --libs cairomm-1.0)',
+           '-L/usr/local/Cellar/jpeg/8d/lib -ljpeg',        
             '-lc++ -lc++abi'            
           ],
           'xcode_settings': {
